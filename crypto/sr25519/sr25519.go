@@ -64,6 +64,11 @@ func (kp *Keypair) PublicKey() string {
 	return hexutil.Encode(kp.keyringPair.PublicKey)
 }
 
+// PrivateKey returns the privatekey encoded as a ecdsa.PrivateKey
+func (kp *Keypair) PrivateKey() *ecdsa.PrivateKey {
+	return nil
+}
+
 // UpdatePrivateKey updates the keypair's private key
 func (kp *Keypair) UpdatePrivateKey(privKey *ecdsa.PrivateKey) {
 
