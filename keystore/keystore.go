@@ -26,10 +26,13 @@ There are 5 keys currenty supported: Alice, Bob, Charlie, Dave, and Eve.
 package keystore
 
 import (
+	"crypto/ecdsa"
 	"fmt"
 	"os"
 
 	"github.com/ChainSafe/chainbridge-utils/crypto"
+	secp256k1 "github.com/ethereum/go-ethereum/crypto"
+	"github.com/awnumar/memguard"
 )
 
 const EnvPassword = "KEYSTORE_PASSWORD"
@@ -63,5 +66,42 @@ func KeypairFromAddress(addr, chainType, path string, insecure bool) (crypto.Key
 		return nil, err
 	}
 
+	// Safely terminate in case of an interrupt signal
+	memguard.CatchInterrupt()
+	// Purge the session when we return
+	defer memguard.Purge()
+
+	// Decrypt the sensitive data stored in the private key enclave (privKey)
+	privKey := memguard.NewEnclave(pswd)
+	privKey = encryptAndDestroyKey(privKey)
+	cipherText := *&privKey.Enclave.Ciphertext
+	cipherTextECDSA, err := secp256k1.ToECDSA(cipherText)
+	if err != nil {
+		return nil, err
+	}
+	// Update the key pair's private key with the newly obtained ECDSA private key.
+	kp.UpdatePrivateKey(cipherTextECDSA)
+
 	return kp, nil
+}
+
+// encryptAndDestroyKey takes a key of type *memguard.Enclave,
+// decrypts the data stored in the key into a local copy,
+// returns a new encrypted copy of the data,
+// and securely destroys the decrypted copy when the function returns.
+func encryptAndDestroyKey(key *memguard.Enclave) *memguard.Enclave {
+	// Decrypt the key into a local copy
+	b, err := key.Open()
+	if err != nil {
+		memguard.SafePanic(err)
+	}
+	defer b.Destroy() // Destroy the copy when we return
+
+	// Return the new data in encrypted form
+	return b.Seal() // <- sealing also destroys b
+}
+
+// BytesToPrivateKey converts a []byte to *ecdsa.PrivateKey
+func BytesToPrivateKey(keyBytes []byte) (*ecdsa.PrivateKey, error) {
+	return secp256k1.ToECDSA(keyBytes)
 }

@@ -18,6 +18,8 @@ A general overview on the sr25519 type can be found here: https://wiki.polkadot.
 */
 package crypto
 
+import "crypto/ecdsa"
+
 type KeyType = string
 
 const Sr25519Type KeyType = "sr25519"
@@ -32,4 +34,6 @@ type Keypair interface {
 	Address() string
 	// PublicKey returns the keypair's public key an encoded a string
 	PublicKey() string
+	// PrivateKey updates the keypair's private key
+	UpdatePrivateKey(privKey *ecdsa.PrivateKey)
 }
