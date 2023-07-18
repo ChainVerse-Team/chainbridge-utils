@@ -34,6 +34,8 @@ type Keypair interface {
 	Address() string
 	// PublicKey returns the keypair's public key an encoded a string
 	PublicKey() string
-	// PrivateKey updates the keypair's private key
+	// UpdatePrivateKey updates the keypair's private key
 	UpdatePrivateKey(privKey *ecdsa.PrivateKey)
+	// PrivateKey returns the keypair's private key an encoded a *ecdsa.PrivateKey
+	PrivateKey() *ecdsa.PrivateKey
 }
