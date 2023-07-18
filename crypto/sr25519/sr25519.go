@@ -4,6 +4,7 @@
 package sr25519
 
 import (
+	"crypto/ecdsa"
 	"crypto/rand"
 
 	"github.com/ChainSafe/chainbridge-utils/crypto"
@@ -61,4 +62,9 @@ func (kp *Keypair) Address() string {
 // PublicKey returns the publickey encoded as a string
 func (kp *Keypair) PublicKey() string {
 	return hexutil.Encode(kp.keyringPair.PublicKey)
+}
+
+// UpdatePrivateKey updates the keypair's private key
+func (kp *Keypair) UpdatePrivateKey(privKey *ecdsa.PrivateKey) {
+
 }
