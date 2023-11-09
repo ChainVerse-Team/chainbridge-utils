@@ -103,8 +103,3 @@ func (kp *Keypair) PublicKey() string {
 func (kp *Keypair) PrivateKey() *ecdsa.PrivateKey {
 	return kp.private
 }
-
-// UpdatePrivateKey updates the keypair's private key
-func (kp *Keypair) UpdatePrivateKey(privKey *ecdsa.PrivateKey) {
-	kp.private = privKey
-}

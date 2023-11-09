@@ -33,6 +33,7 @@ import (
 	"github.com/ChainSafe/chainbridge-utils/crypto"
 	secp256k1 "github.com/ethereum/go-ethereum/crypto"
 	"github.com/awnumar/memguard"
+	coreMemguard "github.com/awnumar/memguard/core"
 )
 
 const EnvPassword = "KEYSTORE_PASSWORD"
@@ -61,11 +62,6 @@ func KeypairFromAddress(addr, chainType, path string, insecure bool) (crypto.Key
 		pswd = GetPassword(fmt.Sprintf("Enter password for key %s:", path))
 	}
 
-	kp, err := ReadFromFileAndDecrypt(path, pswd, keyMapping[chainType])
-	if err != nil {
-		return nil, err
-	}
-
 	// Safely terminate in case of an interrupt signal
 	memguard.CatchInterrupt()
 	// Purge the session when we return
@@ -74,14 +70,20 @@ func KeypairFromAddress(addr, chainType, path string, insecure bool) (crypto.Key
 	// Decrypt the sensitive data stored in the private key enclave (privKey)
 	privKey := memguard.NewEnclave(pswd)
 	privKey = encryptAndDestroyKey(privKey)
-	cipherText := *&privKey.Enclave.Ciphertext
-	cipherTextECDSA, err := secp256k1.ToECDSA(cipherText)
+	cipherText := privKey.Enclave.Ciphertext
+	keyEnc := memguard.Enclave{Enclave: &coreMemguard.Enclave{Ciphertext: cipherText}}
+	keyBuf, err := keyEnc.Open()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return nil, fmt.Errorf("could not open file: %w", err)
+	}
+	defer keyBuf.Destroy()
+
+	kp, err := ReadFromFileAndDecrypt(path, keyBuf.Bytes(), keyMapping[chainType])
 	if err != nil {
 		return nil, err
 	}
-	// Update the key pair's private key with the newly obtained ECDSA private key.
-	kp.UpdatePrivateKey(cipherTextECDSA)
-
+	
 	return kp, nil
 }
 
