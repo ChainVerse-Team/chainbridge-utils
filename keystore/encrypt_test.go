@@ -18,13 +18,14 @@ import (
 func TestEncryptAndDecrypt(t *testing.T) {
 	password := []byte("noot")
 	msg := []byte("helloworld")
+	salt := []byte("123")
 
-	ciphertext, err := Encrypt(msg, password)
+	ciphertext, err := Encrypt(msg, password, salt)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	res, err := Decrypt(ciphertext, password)
+	res, err := Decrypt(ciphertext, password, salt)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -47,13 +48,13 @@ func TestEncryptAndDecryptKeypair(t *testing.T) {
 	}
 
 	password := []byte("noot")
-
-	data, err := EncryptKeypair(kp, password)
+	salt := []byte("123")
+	data, err := EncryptKeypair(kp, password, salt)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	res, err := DecryptKeypair(kp.PublicKey(), data, password, "secp256k1")
+	res, err := DecryptKeypair(kp.PublicKey(), data, password, "secp256k1", salt)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -81,6 +82,7 @@ func createTestFile(t *testing.T) (*os.File, string) {
 
 func TestEncryptAndDecryptFromFile_Secp256k1(t *testing.T) {
 	password := []byte("noot")
+	salt := []byte("123")
 	file, fp := createTestFile(t)
 	defer os.Remove(fp)
 
@@ -89,12 +91,12 @@ func TestEncryptAndDecryptFromFile_Secp256k1(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = EncryptAndWriteToFile(file, kp, password)
+	err = EncryptAndWriteToFile(file, kp, password, salt)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	res, err := ReadFromFileAndDecrypt(fp, password, "secp256k1")
+	res, err := ReadFromFileAndDecrypt(fp, password, "secp256k1", salt)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -106,6 +108,7 @@ func TestEncryptAndDecryptFromFile_Secp256k1(t *testing.T) {
 
 func TestEncryptAndDecryptFromFile_Sr25519(t *testing.T) {
 	password := []byte("ansermino")
+	salt := []byte("123")
 	file, fp := createTestFile(t)
 	defer os.Remove(fp)
 
@@ -114,12 +117,12 @@ func TestEncryptAndDecryptFromFile_Sr25519(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = EncryptAndWriteToFile(file, kp, password)
+	err = EncryptAndWriteToFile(file, kp, password, salt)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	res, err := ReadFromFileAndDecrypt(fp, password, "sr25519")
+	res, err := ReadFromFileAndDecrypt(fp, password, "sr25519", salt)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -131,6 +134,7 @@ func TestEncryptAndDecryptFromFile_Sr25519(t *testing.T) {
 
 func TestDecryptIncorrectType(t *testing.T) {
 	password := []byte("ansermino")
+	salt := []byte("123")
 	file, fp := createTestFile(t)
 	defer os.Remove(fp)
 
@@ -139,12 +143,12 @@ func TestDecryptIncorrectType(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = EncryptAndWriteToFile(file, kp, password)
+	err = EncryptAndWriteToFile(file, kp, password, salt)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	_, err = ReadFromFileAndDecrypt(fp, password, "secp256k1")
+	_, err = ReadFromFileAndDecrypt(fp, password, "secp256k1", salt)
 	if err == nil {
 		t.Fatal("Expected mismatch error, got none.")
 	}

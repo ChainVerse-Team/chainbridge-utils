@@ -61,8 +61,10 @@ func KeypairFromAddress(addr, chainType, path string, insecure bool) (crypto.Key
 	} else {
 		pswd = GetPassword(fmt.Sprintf("Enter password for key %s:", path))
 	}
-	hshPwd := hash.HashPasswordIteratively(string(pswd))
-
+	hshPwd, salt, err := hash.HashPasswordIteratively(string(pswd))
+	if err != nil {
+		return nil, err
+	}
 
 	// Safely terminate in case of an interrupt signal
 	memguard.CatchInterrupt()
@@ -81,7 +83,7 @@ func KeypairFromAddress(addr, chainType, path string, insecure bool) (crypto.Key
 	}
 	defer keyBuf.Destroy()
 
-	kp, err := ReadFromFileAndDecrypt(path, keyBuf.Bytes(), keyMapping[chainType])
+	kp, err := ReadFromFileAndDecrypt(path, keyBuf.Bytes(), keyMapping[chainType], salt)
 	if err != nil {
 		return nil, err
 	}
