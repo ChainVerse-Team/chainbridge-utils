@@ -16,8 +16,8 @@ import (
 )
 
 // Decrypt uses AES to decrypt ciphertext with the symmetric key deterministically created from `password`
-func Decrypt(data, password []byte) ([]byte, error) {
-	gcm, err := gcmFromPassphrase(password)
+func Decrypt(data, password []byte, salt []byte) ([]byte, error) {
+	gcm, err := gcmFromPassphrase(password, salt)
 	if err != nil {
 		return nil, err
 	}
@@ -52,8 +52,8 @@ func DecodeKeypair(in []byte, keytype crypto.KeyType) (kp crypto.Keypair, err er
 
 // DecryptPrivateKey uses AES to decrypt the ciphertext into a `crypto.PrivateKey` with a symmetric key deterministically
 // created from `password`
-func DecryptKeypair(expectedPubK string, data, password []byte, keytype string) (crypto.Keypair, error) {
-	pk, err := Decrypt(data, password)
+func DecryptKeypair(expectedPubK string, data, password []byte, keytype string, salt []byte) (crypto.Keypair, error) {
+	pk, err := Decrypt(data, password, salt)
 	if err != nil {
 		return nil, err
 	}
@@ -70,7 +70,7 @@ func DecryptKeypair(expectedPubK string, data, password []byte, keytype string) 
 }
 
 // ReadFromFileAndDecrypt reads ciphertext from a file and decrypts it using the password into a `crypto.PrivateKey`
-func ReadFromFileAndDecrypt(filename string, password []byte, keytype string) (crypto.Keypair, error) {
+func ReadFromFileAndDecrypt(filename string, password []byte, keytype string, salt []byte) (crypto.Keypair, error) {
 	fp, err := filepath.Abs(filename)
 	if err != nil {
 		return nil, err
@@ -91,5 +91,5 @@ func ReadFromFileAndDecrypt(filename string, password []byte, keytype string) (c
 		return nil, fmt.Errorf("Keystore type and Chain type mismatched. Expected Keystore file of type %s, got type %s", keytype, keydata.Type)
 	}
 
-	return DecryptKeypair(keydata.PublicKey, keydata.Ciphertext, password, keydata.Type)
+	return DecryptKeypair(keydata.PublicKey, keydata.Ciphertext, password, keydata.Type, salt)
 }

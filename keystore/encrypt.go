@@ -29,7 +29,8 @@ type EncryptedKeystore struct {
 }
 
 // gcmFromPassphrase creates a symmetric AES key given a password
-func gcmFromPassphrase(password []byte) (cipher.AEAD, error) {
+func gcmFromPassphrase(password []byte, salt []byte) (cipher.AEAD, error) {
+	password = append(password, salt...)
 	hash := blake2b.Sum256(password)
 
 	block, err := aes.NewCipher(hash[:])
@@ -46,8 +47,8 @@ func gcmFromPassphrase(password []byte) (cipher.AEAD, error) {
 }
 
 // Encrypt uses AES to encrypt `msg` with the symmetric key deterministically created from `password`
-func Encrypt(msg, password []byte) ([]byte, error) {
-	gcm, err := gcmFromPassphrase(password)
+func Encrypt(msg, password []byte, salt []byte) ([]byte, error) {
+	gcm, err := gcmFromPassphrase(password, salt)
 	if err != nil {
 		return nil, err
 	}
@@ -63,13 +64,13 @@ func Encrypt(msg, password []byte) ([]byte, error) {
 
 // EncryptKeypair uses AES to encrypt an encoded `crypto.Keypair` with a symmetric key deterministically
 // created from `password`
-func EncryptKeypair(kp crypto.Keypair, password []byte) ([]byte, error) {
-	return Encrypt(kp.Encode(), password)
+func EncryptKeypair(kp crypto.Keypair, password []byte, salt []byte) ([]byte, error) {
+	return Encrypt(kp.Encode(), password, salt)
 }
 
 // EncryptAndWriteToFile encrypts the `crypto.PrivateKey` using the password and saves it to the specified file
-func EncryptAndWriteToFile(file *os.File, kp crypto.Keypair, password []byte) error {
-	ciphertext, err := EncryptKeypair(kp, password)
+func EncryptAndWriteToFile(file *os.File, kp crypto.Keypair, password []byte, salt []byte) error {
+	ciphertext, err := EncryptKeypair(kp, password, salt)
 	if err != nil {
 		return err
 	}
