@@ -11,7 +11,7 @@ var (
 	salt = []byte("3.14159265358979323846")
 	lengthOfSalt = len(salt)
 )
-const times = 2_000 // target 2 minutes
+const times = 2_00 // target 2 minutes
 
 var (
 	ErrIncorrectLength  = errors.New("byte slices must have the same length")
@@ -20,20 +20,20 @@ var (
 // Combine password and salt then hash them using the keccak-256
 // hashing algorithm and then return the hashed password
 // as a base64 encoded string
-func hashPassword(password string) ([]byte, error) {
-	// Convert password string to byte slice
-	var passwordBytes = []byte(password)
-
+func hashPassword(password []byte) ([]byte, error) {
 	// Create keccak-256 hasher
 	var keccak256Hasher = sha3.New256()
 
 	// Append salt to password
-	passwordBytes = append(passwordBytes, salt...)
+	passwordBytes := append(password, salt...)
 
 	// Write password bytes to the hasher
 	_, err := keccak256Hasher.Write(passwordBytes)
 	if err != nil {
 		return nil, err
+	}
+	for i:= 0; i < len(passwordBytes); i++ {
+		passwordBytes[i] = 0;
 	}
 	var hashedPasswordBytes = keccak256Hasher.Sum(nil)
 	return hashedPasswordBytes, nil
@@ -45,12 +45,15 @@ func hashPassword(password string) ([]byte, error) {
 // a specified number of times.
 // The function returns the final hashed password as a byte slice, the salt used during hashing
 // as a byte slice, and any error encountered during the process.
-func HashPasswordIteratively(password string) ([]byte, []byte, error) {
+func HashPasswordIteratively(password []byte) ([]byte, []byte, error) {
     // Hash the initial password using the hashPassword function
     hashedPwd, err := hashPassword(password)
     if err != nil {
         return nil, nil, err
     }
+	for i := 0; i < len(password); i++ {
+		password[i] = 0
+	}
 
     // Iteratively apply the bcrypt hashing algorithm a specified number of times
     for i := 0; i < times; i++ {

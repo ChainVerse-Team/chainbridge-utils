@@ -8,19 +8,19 @@ import (
 func Test_hashPassword(t *testing.T) {
 	tests := []struct {
 		name     string
-		password string
+		password []byte
 		want     []byte
 		wantErr  bool
 	}{
 		{
 			name:     "correst testcase 1",
-			password: "Helloworld",
+			password: []byte("Helloworld"),
 			want:     []byte{148, 188, 171, 220, 198, 43, 16, 33, 202, 188, 177, 135, 187, 100, 166, 52, 231, 192, 181, 134, 158, 242, 58, 5, 252, 148, 159, 180, 252, 137, 71, 182},
 			wantErr:  false,
 		},
 		{
 			name:     "correst testcase 2",
-			password: "123456",
+			password: []byte("123456"),
 			want:     []byte{67, 142, 104, 21, 71, 216, 191, 8, 88, 159, 190, 241, 66, 48, 97, 230, 90, 46, 148, 77, 163, 166, 53, 255, 213, 76, 217, 30, 51, 109, 184, 8},
 			wantErr:  false,
 		},
