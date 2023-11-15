@@ -4,7 +4,6 @@ go 1.13
 
 require (
 	github.com/ChainSafe/log15 v1.0.0
-	github.com/awnumar/memguard v0.22.3
 	github.com/btcsuite/btcd v0.20.1-beta // indirect
 	github.com/centrifuge/go-substrate-rpc-client v2.0.0+incompatible
 	github.com/ethereum/go-ethereum v1.9.17
@@ -18,4 +17,3 @@ require (
 	gopkg.in/yaml.v2 v2.2.8 // indirect
 )
 
-replace github.com/awnumar/memguard v0.22.3 => github.com/ChainVerse-Team/memguard v0.0.1-beta

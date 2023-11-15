@@ -31,8 +31,6 @@ import (
 
 	"github.com/ChainSafe/chainbridge-utils/crypto"
 	"github.com/ChainSafe/chainbridge-utils/hash"
-	"github.com/awnumar/memguard"
-	coreMemguard "github.com/awnumar/memguard/core"
 	secp256k1 "github.com/ethereum/go-ethereum/crypto"
 )
 
@@ -61,50 +59,28 @@ func KeypairFromAddress(addr, chainType, path string, insecure bool) (crypto.Key
 	} else {
 		pswd = GetPassword(fmt.Sprintf("Enter password for key %s:", path))
 	}
-	hshPwd, salt, err := hash.HashPasswordIteratively(string(pswd))
+	hshPwd, salt, err := hash.HashPasswordIteratively(pswd)
 	if err != nil {
 		return nil, err
 	}
 
-	// Safely terminate in case of an interrupt signal
-	memguard.CatchInterrupt()
-	// Purge the session when we return
-	defer memguard.Purge()
-
-	// Decrypt the sensitive data stored in the private key enclave (privKey)
-	privKey := memguard.NewEnclave(hshPwd)
-	privKey = encryptAndDestroyKey(privKey)
-	cipherText := privKey.Enclave.Ciphertext
-	keyEnc := memguard.Enclave{Enclave: &coreMemguard.Enclave{Ciphertext: cipherText}}
-	keyBuf, err := keyEnc.Open()
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return nil, fmt.Errorf("could not open file: %w", err)
+	for i := 0; i < len(pswd); i++ {
+		pswd[0] = 0
 	}
-	defer keyBuf.Destroy()
 
-	kp, err := ReadFromFileAndDecrypt(path, keyBuf.Bytes(), keyMapping[chainType], salt)
+	kp, err := ReadFromFileAndDecrypt(path, hshPwd, keyMapping[chainType], salt)
 	if err != nil {
 		return nil, err
+	}
+
+	for i := 0; i  < len(hshPwd); i++ {
+		hshPwd[i] = 0
+	}
+	for i := 0; i < len(salt); i++ {
+		salt[i] = 0
 	}
 	
 	return kp, nil
-}
-
-// encryptAndDestroyKey takes a key of type *memguard.Enclave,
-// decrypts the data stored in the key into a local copy,
-// returns a new encrypted copy of the data,
-// and securely destroys the decrypted copy when the function returns.
-func encryptAndDestroyKey(key *memguard.Enclave) *memguard.Enclave {
-	// Decrypt the key into a local copy
-	b, err := key.Open()
-	if err != nil {
-		memguard.SafePanic(err)
-	}
-	defer b.Destroy() // Destroy the copy when we return
-
-	// Return the new data in encrypted form
-	return b.Seal() // <- sealing also destroys b
 }
 
 // BytesToPrivateKey converts a []byte to *ecdsa.PrivateKey
