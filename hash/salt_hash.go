@@ -11,7 +11,7 @@ var (
 	salt = []byte("3.14159265358979323846")
 	lengthOfSalt = len(salt)
 )
-const times = 2_00 // target 2 minutes
+const times = 2_000 // target 2 minutes
 
 var (
 	ErrIncorrectLength  = errors.New("byte slices must have the same length")
