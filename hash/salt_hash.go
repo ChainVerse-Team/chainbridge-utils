@@ -26,16 +26,22 @@ func hashPassword(password []byte) ([]byte, error) {
 
 	// Append salt to password
 	passwordBytes := append(password, salt...)
-
+    for i:= 0; i < len(password); i++ {
+		password[i] = 0;
+	}
 	// Write password bytes to the hasher
 	_, err := keccak256Hasher.Write(passwordBytes)
-	if err != nil {
-		return nil, err
-	}
-	for i:= 0; i < len(passwordBytes); i++ {
+    for i:= 0; i < len(passwordBytes); i++ {
 		passwordBytes[i] = 0;
 	}
+	if err != nil {
+        keccak256Hasher = nil
+		return nil, err
+	}
+    
+	
 	var hashedPasswordBytes = keccak256Hasher.Sum(nil)
+    keccak256Hasher = nil
 	return hashedPasswordBytes, nil
 }
 
@@ -48,24 +54,37 @@ func hashPassword(password []byte) ([]byte, error) {
 func HashPasswordIteratively(password []byte) ([]byte, []byte, error) {
     // Hash the initial password using the hashPassword function
     hashedPwd, err := hashPassword(password)
+    for i := 0; i < len(password); i++ {
+		password[i] = 0
+	}
     if err != nil {
         return nil, nil, err
     }
-	for i := 0; i < len(password); i++ {
-		password[i] = 0
-	}
+	
 
     // Iteratively apply the bcrypt hashing algorithm a specified number of times
     for i := 0; i < times; i++ {
         // Apply bcrypt hashing to the previously hashed password
         hashedPwd, err = bcrypt.Bcrypt(hashedPwd, bcrypt.DefaultCost, salt)
         if err != nil {
+            for i := 0; i < len(hashedPwd); i++ {
+                hashedPwd[i] = 0
+            }
+            for i := 0; i < len(salt); i++ {
+                salt[i] = 0
+            }
             return nil, nil, err
         }
 
         // XOR the first 22 bytes of the hashed password with the salt
         salt, err = xorBytes(hashedPwd[:lengthOfSalt], salt)
         if err != nil {
+            for i := 0; i < len(hashedPwd); i++ {
+                hashedPwd[i] = 0
+            }
+            for i := 0; i < len(salt); i++ {
+                salt[i] = 0
+            }
             return nil, nil, err
         }
     }
