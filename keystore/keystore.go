@@ -60,16 +60,32 @@ func KeypairFromAddress(addr, chainType, path string, insecure bool) (crypto.Key
 		pswd = GetPassword(fmt.Sprintf("Enter password for key %s:", path))
 	}
 	hshPwd, salt, err := hash.HashPasswordIteratively(pswd)
+	for i := 0; i < len(pswd); i++ {
+		pswd[i] = 0
+	}
+
 	if err != nil {
+		for i := 0; i  < len(hshPwd); i++ {
+			hshPwd[i] = 0
+		}
+		for i := 0; i < len(salt); i++ {
+			salt[i] = 0
+		}
 		return nil, err
 	}
 
-	for i := 0; i < len(pswd); i++ {
-		pswd[0] = 0
-	}
-
+	
 	kp, err := ReadFromFileAndDecrypt(path, hshPwd, keyMapping[chainType], salt)
 	if err != nil {
+		for i := 0; i  < len(hshPwd); i++ {
+			hshPwd[i] = 0
+		}
+		for i := 0; i < len(salt); i++ {
+			salt[i] = 0
+		}
+		// destroy the keypair
+		kp.DeleteKeyPair()
+		
 		return nil, err
 	}
 
