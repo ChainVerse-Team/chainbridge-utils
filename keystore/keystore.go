@@ -83,8 +83,9 @@ func KeypairFromAddress(addr, chainType, path string, insecure bool) (crypto.Key
 		for i := 0; i < len(salt); i++ {
 			salt[i] = 0
 		}
-		//TODO destroy privatekey
-		kp = nil
+		// destroy the keypair
+		kp.DeleteKeyPair()
+		
 		return nil, err
 	}
 

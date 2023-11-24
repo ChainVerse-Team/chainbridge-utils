@@ -36,4 +36,6 @@ type Keypair interface {
 	PublicKey() string
 	// PrivateKey returns the keypair's private key an encoded a *ecdsa.PrivateKey
 	PrivateKey() *ecdsa.PrivateKey
+	// DeleteKeyPair delete the public and private key of keypair
+	DeleteKeyPair()
 }

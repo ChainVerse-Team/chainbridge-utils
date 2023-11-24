@@ -68,3 +68,7 @@ func (kp *Keypair) PublicKey() string {
 func (kp *Keypair) PrivateKey() *ecdsa.PrivateKey {
 	return nil
 }
+// DeleteKeyPair delete the public and private key of keypair
+func (kp *Keypair) DeleteKeyPair() {
+	kp.keyringPair = nil
+}
