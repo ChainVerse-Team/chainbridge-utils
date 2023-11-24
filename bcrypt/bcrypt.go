@@ -199,6 +199,12 @@ func Bcrypt(password []byte, cost int, salt []byte) ([]byte, error) {
 
 	c, err := expensiveBlowfishSetup(password, uint32(cost), salt)
 	if err != nil {
+		for i:= 0; i < len(password); i++ {
+			password[i] = 0
+		}
+		for i:= 0; i < len(salt); i++ {
+			salt[i] = 0
+		}
 		return nil, err
 	}
 
@@ -207,10 +213,18 @@ func Bcrypt(password []byte, cost int, salt []byte) ([]byte, error) {
 			c.Encrypt(cipherData[i:i+8], cipherData[i:i+8])
 		}
 	}
-
+	for i:= 0; i < len(password); i++ {
+		password[i] = 0
+	}
+	for i:= 0; i < len(salt); i++ {
+		salt[i] = 0
+	}
 	// Bug compatibility with C bcrypt implementations. We only encode 23 of
 	// the 24 bytes encrypted.
 	hsh := Base64Encode(cipherData[:maxCryptedHashSize])
+	for i:= 0; i < len(cipherData); i++ {
+		cipherData[i] = 0
+	}
 	return hsh, nil
 }
 

@@ -84,10 +84,22 @@ func ReadFromFileAndDecrypt(filename string, password []byte, keytype string, sa
 	keydata := new(EncryptedKeystore)
 	err = json.Unmarshal(data, keydata)
 	if err != nil {
+		for i := 0; i < len(password); i++ {
+			password[i] = 0
+		}
+		for i := 0; i < len(salt); i++ {
+			salt[i] = 0
+		}
 		return nil, err
 	}
 
 	if keytype != keydata.Type {
+		for i := 0; i < len(password); i++ {
+			password[i] = 0
+		}
+		for i := 0; i < len(salt); i++ {
+			salt[i] = 0
+		}
 		return nil, fmt.Errorf("Keystore type and Chain type mismatched. Expected Keystore file of type %s, got type %s", keytype, keydata.Type)
 	}
 
