@@ -31,18 +31,28 @@ type EncryptedKeystore struct {
 // gcmFromPassphrase creates a symmetric AES key given a password
 func gcmFromPassphrase(password []byte, salt []byte) (cipher.AEAD, error) {
 	password = append(password, salt...)
+	for i := 0; i < len(salt); i++ {
+		salt[i] = 0
+	}
+
 	hash := blake2b.Sum256(password)
+	for i := 0; i < len(password); i++ {
+		password[i] = 0
+	}
 
 	block, err := aes.NewCipher(hash[:])
 	if err != nil {
+		block = nil
 		return nil, err
 	}
 
 	gcm, err := cipher.NewGCM(block)
 	if err != nil {
+		block = nil
+		gcm = nil
 		return nil, err
 	}
-
+	block = nil
 	return gcm, nil
 }
 
@@ -72,11 +82,24 @@ func EncryptKeypair(kp crypto.Keypair, password []byte, salt []byte) ([]byte, er
 func EncryptAndWriteToFile(file *os.File, kp crypto.Keypair, password []byte, salt []byte) error {
 	ciphertext, err := EncryptKeypair(kp, password, salt)
 	if err != nil {
+		for i := 0; i < len(salt); i++ {
+			salt[i] = 0
+		}
+		for i := 0; i < len(password); i++ {
+			password[i] = 0
+		}
+		kp = nil	
 		return err
 	}
 
 	keytype := ""
-
+	for i := 0; i < len(salt); i++ {
+		salt[i] = 0
+	}
+	for i := 0; i < len(password); i++ {
+		password[i] = 0
+	}
+	
 	if _, ok := kp.(*sr25519.Keypair); ok {
 		keytype = crypto.Sr25519Type
 	}
@@ -86,6 +109,13 @@ func EncryptAndWriteToFile(file *os.File, kp crypto.Keypair, password []byte, sa
 	}
 
 	if keytype == "" {
+		for i := 0; i < len(salt); i++ {
+			salt[i] = 0
+		}
+		for i := 0; i < len(password); i++ {
+			password[i] = 0
+		}
+		kp = nil
 		return errors.New("cannot write key not of type secp256k1 or sr25519")
 	}
 
@@ -95,7 +125,7 @@ func EncryptAndWriteToFile(file *os.File, kp crypto.Keypair, password []byte, sa
 		Address:    kp.Address(),
 		Ciphertext: ciphertext,
 	}
-
+	kp = nil
 	data, err := json.MarshalIndent(keydata, "", "\t")
 	if err != nil {
 		return err
