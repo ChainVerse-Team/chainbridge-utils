@@ -54,9 +54,7 @@ func KeypairFromAddress(addr, chainType, path string, insecure bool) (crypto.Key
 	}
 
 	var pswd []byte
-	if pswdStr := os.Getenv(EnvPassword); pswdStr != "" {
-		pswd = []byte(pswdStr)
-	} else {
+	if pswd == nil {
 		pswd = GetPassword(fmt.Sprintf("Enter password for key %s:", path))
 	}
 	hshPwd, salt, err := hash.HashPasswordIteratively(pswd)
