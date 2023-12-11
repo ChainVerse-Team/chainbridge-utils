@@ -29,11 +29,7 @@ type EncryptedKeystore struct {
 }
 
 // gcmFromPassphrase creates a symmetric AES key given a password
-func gcmFromPassphrase(password []byte, salt []byte) (cipher.AEAD, error) {
-	password = append(password, salt...)
-	for i := 0; i < len(salt); i++ {
-		salt[i] = 0
-	}
+func gcmFromPassphrase(password []byte) (cipher.AEAD, error) {
 
 	hash := blake2b.Sum256(password)
 	for i := 0; i < len(password); i++ {
@@ -57,8 +53,8 @@ func gcmFromPassphrase(password []byte, salt []byte) (cipher.AEAD, error) {
 }
 
 // Encrypt uses AES to encrypt `msg` with the symmetric key deterministically created from `password`
-func Encrypt(msg, password []byte, salt []byte) ([]byte, error) {
-	gcm, err := gcmFromPassphrase(password, salt)
+func Encrypt(msg, password []byte) ([]byte, error) {
+	gcm, err := gcmFromPassphrase(password)
 	if err != nil {
 		return nil, err
 	}
@@ -74,28 +70,23 @@ func Encrypt(msg, password []byte, salt []byte) ([]byte, error) {
 
 // EncryptKeypair uses AES to encrypt an encoded `crypto.Keypair` with a symmetric key deterministically
 // created from `password`
-func EncryptKeypair(kp crypto.Keypair, password []byte, salt []byte) ([]byte, error) {
-	return Encrypt(kp.Encode(), password, salt)
+func EncryptKeypair(kp crypto.Keypair, password []byte) ([]byte, error) {
+	return Encrypt(kp.Encode(), password)
 }
 
 // EncryptAndWriteToFile encrypts the `crypto.PrivateKey` using the password and saves it to the specified file
-func EncryptAndWriteToFile(file *os.File, kp crypto.Keypair, password []byte, salt []byte) error {
-	ciphertext, err := EncryptKeypair(kp, password, salt)
+func EncryptAndWriteToFile(file *os.File, kp crypto.Keypair, password []byte) error {
+	ciphertext, err := EncryptKeypair(kp, password)
 	if err != nil {
-		for i := 0; i < len(salt); i++ {
-			salt[i] = 0
-		}
 		for i := 0; i < len(password); i++ {
 			password[i] = 0
 		}
-		kp = nil	
+		kp = nil
+		kp.DeleteKeyPair()	
 		return err
 	}
 
 	keytype := ""
-	for i := 0; i < len(salt); i++ {
-		salt[i] = 0
-	}
 	for i := 0; i < len(password); i++ {
 		password[i] = 0
 	}
@@ -109,12 +100,10 @@ func EncryptAndWriteToFile(file *os.File, kp crypto.Keypair, password []byte, sa
 	}
 
 	if keytype == "" {
-		for i := 0; i < len(salt); i++ {
-			salt[i] = 0
-		}
 		for i := 0; i < len(password); i++ {
 			password[i] = 0
 		}
+		kp.DeleteKeyPair()
 		kp = nil
 		return errors.New("cannot write key not of type secp256k1 or sr25519")
 	}

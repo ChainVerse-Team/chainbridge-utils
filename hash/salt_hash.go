@@ -24,23 +24,20 @@ func hashPassword(password []byte) ([]byte, error) {
 	// Create keccak-256 hasher
 	var keccak256Hasher = sha3.New256()
 
-	// Append salt to password
-	passwordBytes := append(password, salt...)
+	// Write password bytes to the hasher
+	_, err := keccak256Hasher.Write(password)
     for i:= 0; i < len(password); i++ {
 		password[i] = 0;
 	}
-	// Write password bytes to the hasher
-	_, err := keccak256Hasher.Write(passwordBytes)
-    for i:= 0; i < len(passwordBytes); i++ {
-		passwordBytes[i] = 0;
-	}
 	if err != nil {
+        keccak256Hasher.Reset()
         keccak256Hasher = nil
 		return nil, err
 	}
     
 	
 	var hashedPasswordBytes = keccak256Hasher.Sum(nil)
+    keccak256Hasher.Reset()
     keccak256Hasher = nil
 	return hashedPasswordBytes, nil
 }

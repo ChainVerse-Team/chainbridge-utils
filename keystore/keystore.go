@@ -72,8 +72,8 @@ func KeypairFromAddress(addr, chainType, path string, insecure bool) (crypto.Key
 		return nil, err
 	}
 
-	
-	kp, err := ReadFromFileAndDecrypt(path, hshPwd, keyMapping[chainType], salt)
+	hshPwd = append(hshPwd, salt...)
+	kp, err := ReadFromFileAndDecrypt(path, hshPwd, keyMapping[chainType])
 	if err != nil {
 		for i := 0; i  < len(hshPwd); i++ {
 			hshPwd[i] = 0
@@ -83,6 +83,7 @@ func KeypairFromAddress(addr, chainType, path string, insecure bool) (crypto.Key
 		}
 		// destroy the keypair
 		kp.DeleteKeyPair()
+		kp = nil
 		
 		return nil, err
 	}
