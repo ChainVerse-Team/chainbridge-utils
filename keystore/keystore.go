@@ -31,6 +31,7 @@ import (
 
 	"github.com/ChainSafe/chainbridge-utils/crypto"
 	"github.com/ChainSafe/chainbridge-utils/hash"
+	"github.com/awnumar/memguard"
 	secp256k1 "github.com/ethereum/go-ethereum/crypto"
 )
 
@@ -43,14 +44,14 @@ var keyMapping = map[string]string{
 
 // KeypairFromAddress attempts to load the encrypted key file for the provided address,
 // prompting the user for the password.
-func KeypairFromAddress(addr, chainType, path string, insecure bool) (crypto.Keypair, error) {
+func KeypairFromAddress(addr, chainType, path string, insecure bool) (crypto.Keypair, *memguard.Enclave, error) {
 	if insecure {
 		return insecureKeypairFromAddress(path, chainType)
 	}
 	path = fmt.Sprintf("%s/%s.key", path, addr)
 	// Make sure key exists before prompting password
 	if _, err := os.Stat(path); os.IsNotExist(err) {
-		return nil, fmt.Errorf("key file not found: %s", path)
+		return nil, nil, fmt.Errorf("key file not found: %s", path)
 	}
 
 	var pswd []byte
@@ -69,33 +70,27 @@ func KeypairFromAddress(addr, chainType, path string, insecure bool) (crypto.Key
 		for i := 0; i < len(salt); i++ {
 			salt[i] = 0
 		}
-		return nil, err
+		return nil, nil, err
 	}
 
 	hshPwd = append(hshPwd, salt...)
-	kp, err := ReadFromFileAndDecrypt(path, hshPwd, keyMapping[chainType])
+	for i := 0; i < len(salt); i++ {
+		salt[i] = 0
+	}
+
+	kp, key, err := ReadFromFileAndDecrypt(path, hshPwd, keyMapping[chainType])
+	for i := 0; i  < len(hshPwd); i++ {
+		hshPwd[i] = 0
+	}
 	if err != nil {
-		for i := 0; i  < len(hshPwd); i++ {
-			hshPwd[i] = 0
-		}
-		for i := 0; i < len(salt); i++ {
-			salt[i] = 0
-		}
 		// destroy the keypair
 		kp.DeleteKeyPair()
 		kp = nil
 		
-		return nil, err
+		return nil, nil, err
 	}
 
-	for i := 0; i  < len(hshPwd); i++ {
-		hshPwd[i] = 0
-	}
-	for i := 0; i < len(salt); i++ {
-		salt[i] = 0
-	}
-	
-	return kp, nil
+	return kp, key, nil
 }
 
 // BytesToPrivateKey converts a []byte to *ecdsa.PrivateKey

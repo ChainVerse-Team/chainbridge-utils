@@ -9,6 +9,7 @@ import (
 	"github.com/ChainSafe/chainbridge-utils/crypto"
 	"github.com/ChainSafe/chainbridge-utils/crypto/secp256k1"
 	"github.com/ChainSafe/chainbridge-utils/crypto/sr25519"
+	"github.com/awnumar/memguard"
 	"github.com/centrifuge/go-substrate-rpc-client/signature"
 )
 
@@ -100,7 +101,7 @@ func padWithZeros(key []byte, targetLength int) []byte {
 }
 
 // insecureKeypairFromAddress is used for resolving addresses to test keypairs.
-func insecureKeypairFromAddress(key string, chainType string) (crypto.Keypair, error) {
+func insecureKeypairFromAddress(key string, chainType string) (crypto.Keypair, *memguard.Enclave, error) {
 	var kp crypto.Keypair
 	var ok bool
 
@@ -109,12 +110,12 @@ func insecureKeypairFromAddress(key string, chainType string) (crypto.Keypair, e
 	} else if chainType == SubChain {
 		kp, ok = TestKeyRing.SubstrateKeys[key]
 	} else {
-		return nil, fmt.Errorf("unrecognized chain type: %s", chainType)
+		return nil, nil, fmt.Errorf("unrecognized chain type: %s", chainType)
 	}
 
 	if !ok {
-		return nil, fmt.Errorf("invalid test key selection: %s", key)
+		return nil, nil, fmt.Errorf("invalid test key selection: %s", key)
 	}
 
-	return kp, nil
+	return kp, nil, nil
 }
