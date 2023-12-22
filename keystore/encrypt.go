@@ -38,10 +38,15 @@ func gcmFromPassphrase(password []byte) (cipher.AEAD, error) {
 
 	block, err := aes.NewCipher(hash[:])
 	if err != nil {
+		for i := 0; i < len(hash); i++ {
+			hash[i] = 0
+		}
 		block = nil
 		return nil, err
 	}
-
+	for i := 0; i < len(hash); i++ {
+		hash[i] = 0
+	}
 	gcm, err := cipher.NewGCM(block)
 	if err != nil {
 		block = nil
@@ -56,7 +61,16 @@ func gcmFromPassphrase(password []byte) (cipher.AEAD, error) {
 func Encrypt(msg, password []byte) ([]byte, error) {
 	gcm, err := gcmFromPassphrase(password)
 	if err != nil {
+		for i:= 0; i < len(password); i++ {
+			password[i] = 0
+		}
+		for i:= 0; i < len(msg); i++ {
+			msg[i] = 0
+		}
 		return nil, err
+	}
+	for i:= 0; i < len(password); i++ {
+		password[i] = 0
 	}
 
 	nonce := make([]byte, gcm.NonceSize())
@@ -65,6 +79,9 @@ func Encrypt(msg, password []byte) ([]byte, error) {
 	}
 
 	ciphertext := gcm.Seal(nonce, nonce, msg, nil)
+	for i:= 0; i < len(msg); i++ {
+		msg[i] = 0
+	}
 	return ciphertext, nil
 }
 
@@ -81,8 +98,8 @@ func EncryptAndWriteToFile(file *os.File, kp crypto.Keypair, password []byte) er
 		for i := 0; i < len(password); i++ {
 			password[i] = 0
 		}
+		kp.DeleteKeyPair()
 		kp = nil
-		kp.DeleteKeyPair()	
 		return err
 	}
 
@@ -121,6 +138,8 @@ func EncryptAndWriteToFile(file *os.File, kp crypto.Keypair, password []byte) er
 	}
 
 	_, err = file.Write(append(data, byte('\n')))
+	kp.DeleteKeyPair()
+	kp = nil
 	return err
 }
 

@@ -52,13 +52,13 @@ func TestEncryptAndDecryptKeypair(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	res, err := DecryptKeypair(kp.PublicKey(), data, password, "secp256k1")
+	res, _,  err := DecryptKeypair(kp.PublicKey(), data, password, "secp256k1")
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	if !reflect.DeepEqual(kp, res) {
-		t.Fatalf("Fail: got %#v expected %#v", res, kp)
+		t.Fatalf("Fail: got %#v  expected %#v", res, kp)
 	}
 }
 
@@ -93,7 +93,7 @@ func TestEncryptAndDecryptFromFile_Secp256k1(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	res, err := ReadFromFileAndDecrypt(fp, password, "secp256k1")
+	res, _, err := ReadFromFileAndDecrypt(fp, password, "secp256k1")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -118,7 +118,7 @@ func TestEncryptAndDecryptFromFile_Sr25519(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	res, err := ReadFromFileAndDecrypt(fp, password, "sr25519")
+	res, _, err := ReadFromFileAndDecrypt(fp, password, "sr25519")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -143,7 +143,7 @@ func TestDecryptIncorrectType(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	_, err = ReadFromFileAndDecrypt(fp, password, "secp256k1")
+	_, _, err = ReadFromFileAndDecrypt(fp, password, "secp256k1")
 	if err == nil {
 		t.Fatal("Expected mismatch error, got none.")
 	}
